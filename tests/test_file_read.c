@@ -21,7 +21,7 @@
 #define MAXDATA 254		/* packet_max_datasize */
 
 static uint32_t remaining;	/* bytes the fake device has yet to send */
-static int first_read, sent_ff00;
+static int first_read, sent_ff00, empty_chunk;
 
 uint32_t packet_max_datasize(nspire_handle_t *h) { (void)h; return MAXDATA; }
 int service_connect(nspire_handle_t *h, uint16_t sid) { (void)h; (void)sid; first_read = 1; return 0; }
@@ -46,6 +46,7 @@ int data_scan(const char *f, const void *p, size_t m, ...) {
 int data_read(nspire_handle_t *h, void *p, size_t maxlen, size_t *actual) {
 	(void)h;
 	if (first_read) { first_read = 0; if (actual) *actual = maxlen; return 0; }
+	if (empty_chunk) { if (actual) *actual = 0; return 0; }	/* malformed reply */
 	size_t n = maxlen - 1 < remaining ? maxlen - 1 : remaining;
 	uint8_t *b = p;
 	b[0] = 0x05;
@@ -80,6 +81,10 @@ static void run(size_t size) {
 int main(void) {
 	size_t sizes[] = { DEV_LEN, DEV_LEN + 5, 0, 1, 10, MAXDATA, DEV_LEN - 1 };
 	for (size_t i = 0; i < sizeof(sizes) / sizeof(*sizes); i++) run(sizes[i]);
+	uint8_t one[8]; size_t got = 0;
+	remaining = DEV_LEN; empty_chunk = 1;
+	CHECK(nspire_file_read(NULL, "/x.tns", one, sizeof(one), &got) == -NSPIRE_ERR_INVALPKT, "empty chunk not rejected");
+	empty_chunk = 0;
 	printf("%s (%d failures)\n", fails ? "FAILED" : "OK", fails);
 	return fails != 0;
 }
