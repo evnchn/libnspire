@@ -117,7 +117,7 @@ int nspire_file_read(nspire_handle_t *handle, const char *path,
 			goto end;
 
 		if (size) {
-			size_t to_copy = len - 1;
+			size_t to_copy = len - 1 < size ? len - 1 : size;
 			memcpy(ptr, buffer + 1, to_copy);
 			size -= to_copy;
 
