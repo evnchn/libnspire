@@ -116,8 +116,13 @@ int nspire_file_read(nspire_handle_t *handle, const char *path,
 		if ( (ret = data_read(handle, buffer, len+1, &len)) )
 			goto end;
 
+		if (len < 2) {
+			ret = -NSPIRE_ERR_INVALPKT;
+			goto end;
+		}
+
 		if (size) {
-			size_t to_copy = len - 1;
+			size_t to_copy = len - 1 < size ? len - 1 : size;
 			memcpy(ptr, buffer + 1, to_copy);
 			size -= to_copy;
 

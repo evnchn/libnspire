@@ -22,6 +22,7 @@
 #include "handle.h"
 
 int nspire_file_write(nspire_handle_t *, const char *, void*, size_t);
+/* Stores at most size bytes; *read_bytes is the full file size, so a value above size means truncated. */
 int nspire_file_read(nspire_handle_t *handle, const char *path,
 		void* data, size_t size, size_t *read_bytes);
 int nspire_file_move(nspire_handle_t *handle, const char *src, const char *dst);
